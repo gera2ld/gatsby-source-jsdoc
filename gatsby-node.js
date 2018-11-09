@@ -24,15 +24,6 @@ exports.sourceNodes = async ({
     data: {},
     map: {},
   };
-  const nodeMap = {};
-  for (const node of nodes) {
-    await handleNode(apis, node, sourceDir);
-  }
-  Object.entries(apis.data)
-  .forEach(([name, data]) => {
-    createJsDocNode(name, data, { createNode, createNodeId });
-  });
-
   const helpers = {
     createNode,
     createNodeId,
@@ -43,6 +34,14 @@ exports.sourceNodes = async ({
       ...i18n,
     },
   };
+
+  for (const node of nodes) {
+    await handleNode(apis, node, sourceDir);
+  }
+  Object.entries(apis.data)
+  .forEach(([name, data]) => {
+    createJsDocNode(name, data, helpers);
+  });
 
   emitter.on('CREATE_NODE', action => {
     const { payload: node } = action;
