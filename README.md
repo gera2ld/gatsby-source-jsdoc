@@ -8,26 +8,30 @@ This plugin requires an instance of [gatsby-source-filesystem](https://www.gatsb
 
 ## Install
 
-`npm install --save gatsby-source-jsdoc
+```sh
+$ npm install --save gatsby-source-jsdoc
+```
 
 ## How to use
 
 Add the plugin to your `gatsby-config.js` and ensure `sourceDir` is pointed to the directory of your JavaScript source files.
 
 ```javascript
-plugins: [
-  {
-    resolve: 'gatsby-source-filesystem',
-    options: {
-      name: 'source',
-      path: `${__dirname}/src/`,
+{
+  plugins: [
+    {
+      resolve: 'gatsby-source-filesystem',
+      options: {
+        name: 'source',
+        path: `${__dirname}/src/`,
+      },
     },
-  },
-  {
-    resolve: 'gatsby-source-jsdoc',
-    options: {
-      sourceDir: `${__dirname}/src/`,
+    {
+      resolve: 'gatsby-source-jsdoc',
+      options: {
+        sourceDir: `${__dirname}/src/`,
+      },
     },
-  },
-]
+  ],
+}
 ```
