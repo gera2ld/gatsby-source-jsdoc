@@ -1,0 +1,17 @@
+{
+  "name": "gatsby-source-jsdoc",
+  "version": "0.0.0",
+  "description": "Gatsby source plugin which uses jsdoc-api to generate JavaScript documentation",
+  "main": "index.js",
+  "author": "Gerald <i@gerald.top>",
+  "license": "MIT",
+  "keywords": [
+    "jsdoc",
+    "gatsby",
+    "gatsby-plugin",
+    "gatsby-source"
+  ],
+  "dependencies": {
+    "jsdoc-api": "^4.0.3"
+  }
+}
