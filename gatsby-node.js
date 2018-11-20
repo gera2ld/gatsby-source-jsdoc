@@ -157,10 +157,10 @@ function createJsDocNode(name, data, {
       if (entries && entries.length) {
         lines.push('', `#### ${title}`);
         entries.forEach(entry => {
-          const parts = [
-            entry.name && `\`${entry.name}\``,
-            entry.type && `*${entry.type.names.join(' | ').replace(/([<>])/g, '\\$1')}*`,
-          ].filter(Boolean);
+          const parts = [];
+          if (entry.name) parts.push(asCode(entry.name));
+          if (entry.type) parts.push(`*${entry.type.names.join(' | ').replace(/([<>])/g, '\\$1')}*`);
+          if (entry.defaultvalue) parts.push(`Default: ${asCode(entry.defaultvalue)}`);
           lines.push('', `- ${parts.join(' ')}`);
           const rows = [];
           if (entry.description) {
@@ -192,4 +192,9 @@ function createJsDocNode(name, data, {
     name,
     jsdoc: items,
   });
+}
+
+function asCode(str) {
+  const escaped = str.replace(/([`$])/g, '\\$1');
+  return `\`${str}\``;
 }
