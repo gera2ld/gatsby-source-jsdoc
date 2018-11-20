@@ -161,13 +161,12 @@ function createJsDocNode(name, data, {
             entry.name && `\`${entry.name}\``,
             entry.type && `*${entry.type.names.join(' | ').replace(/([<>])/g, '\\$1')}*`,
           ].filter(Boolean);
-          const rows = [
-            parts.join(' '),
-          ];
+          lines.push('', `- ${parts.join(' ')}`);
+          const rows = [];
           if (entry.description) {
             rows.push('', ...entry.description.split('\n'));
           }
-          lines.push('', ...rows.map((row, i) => i ? `    ${row}` : `- ${row}`));
+          lines.push(...rows.map(row => `    ${row}`));
         });
       }
     });
