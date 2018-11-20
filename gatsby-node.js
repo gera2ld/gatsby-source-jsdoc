@@ -8,6 +8,7 @@ const defaultLocale = {
   Params: 'Params',
   Returns: 'Returns',
   Example: 'Example',
+  DefaultAs: 'Default: ',
 };
 
 exports.sourceNodes = async ({
@@ -160,7 +161,7 @@ function createJsDocNode(name, data, {
           const parts = [];
           if (entry.name) parts.push(asCode(entry.name));
           if (entry.type) parts.push(`*${entry.type.names.join(' | ').replace(/([<>])/g, '\\$1')}*`);
-          if (entry.defaultvalue) parts.push(`Default: ${asCode(entry.defaultvalue)}`);
+          if (entry.defaultvalue) parts.push(`${i18n.DefaultAs} ${asCode(entry.defaultvalue)}`);
           lines.push('', `- ${parts.join(' ')}`);
           const rows = [];
           if (entry.description) {
