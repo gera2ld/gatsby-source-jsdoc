@@ -159,7 +159,7 @@ function createJsDocNode(name, data, {
         entries.forEach(entry => {
           const parts = [
             entry.name && `\`${entry.name}\``,
-            entry.type && `*${entry.type.names.join(' | ')}*`,
+            entry.type && `*${entry.type.names.join(' | ').replace(/([<>])/g, '\\$1')}*`,
           ].filter(Boolean);
           const rows = [
             parts.join(' '),
