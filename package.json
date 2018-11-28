@@ -13,5 +13,6 @@
   ],
   "dependencies": {
     "jsdoc-api": "^4.0.3"
-  }
+  },
+  "repository": "git@github.com:gera2ld/gatsby-source-jsdoc.git"
 }
