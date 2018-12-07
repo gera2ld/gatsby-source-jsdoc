@@ -1,6 +1,7 @@
 const path = require('path');
 const jsdoc = require('jsdoc-api');
 const crypto = require('crypto');
+const anymatch = require('anymatch');
 
 const digest = str => crypto.createHash('md5').update(str).digest('hex');
 const sortKey = item => `${item.kind === 'file' ? 0 : 1} ${item.longname}`;
@@ -19,7 +20,11 @@ exports.sourceNodes = async ({
   emitter,
 }, pluginOptions) => {
   const { createNode, deleteNode } = actions;
-  const { sourceDir, i18n } = pluginOptions;
+  const { sourceDir, match, i18n } = pluginOptions;
+  const nodeOptions = {
+    sourceDir,
+    match,
+  };
   const nodes = getNodes();
   const apis = {
     data: {},
@@ -37,7 +42,7 @@ exports.sourceNodes = async ({
   };
 
   for (const node of nodes) {
-    await handleNode(apis, node, sourceDir);
+    await handleNode(apis, node, nodeOptions);
   }
   Object.entries(apis.data)
   .forEach(([name, data]) => {
@@ -56,7 +61,7 @@ exports.sourceNodes = async ({
 
   async function updateNode(id, node) {
     const name = apis.map[id];
-    const newName = node && await handleNode(apis, node, sourceDir);
+    const newName = node && await handleNode(apis, node, nodeOptions);
     if (name && name !== newName) {
       updateData(apis, name, id);
       createJsDocNode(name, apis.data[name], helpers);
@@ -67,15 +72,13 @@ exports.sourceNodes = async ({
   }
 };
 
-async function handleNode(apis, node, sourceDir) {
-  if (
-    node.internal.mediaType !== 'application/javascript' ||
-    node.internal.type !== 'File' ||
-    !node.absolutePath.startsWith(sourceDir)
-  ) {
-    return;
-  }
-  const name = path.relative(sourceDir, node.absolutePath).split('/')[0];
+async function handleNode(apis, node, { sourceDir, match }) {
+  if (node.internal.mediaType !== 'application/javascript') return;
+  if (node.internal.type !== 'File') return;
+  if (match && !anymatch(match, node.relativePath)) return;
+  const relpath = path.relative(sourceDir, node.absolutePath);
+  if (relpath.startsWith('..')) return;
+  const name = relpath.split('/')[0];
   let jsdocJson;
   try {
     jsdocJson = await jsdoc.explain({ files: [node.absolutePath] });
