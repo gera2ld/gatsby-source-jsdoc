@@ -1,16 +1,7 @@
 const path = require('path');
-const jsdoc = require('jsdoc-api');
-const crypto = require('crypto');
 const anymatch = require('anymatch');
-
-const digest = str => crypto.createHash('md5').update(str).digest('hex');
-const sortKey = item => `${item.kind === 'file' ? 0 : 1} ${item.longname}`;
-const defaultLocale = {
-  Params: 'Params',
-  Returns: 'Returns',
-  Example: 'Example',
-  DefaultAs: 'Default: ',
-};
+const defaultLocale = require('./lib/locale');
+const parser = require('./lib/parser');
 
 exports.sourceNodes = async ({
   getNodes,
@@ -45,8 +36,8 @@ exports.sourceNodes = async ({
     await handleNode(apis, node, nodeOptions);
   }
   Object.entries(apis.data)
-  .forEach(([name, data]) => {
-    createJsDocNode(name, data, helpers);
+  .forEach(([name, payload]) => {
+    createDocNode(name, payload, helpers);
   });
 
   emitter.on('CREATE_NODE', action => {
@@ -64,45 +55,35 @@ exports.sourceNodes = async ({
     const newName = node && await handleNode(apis, node, nodeOptions);
     if (name && name !== newName) {
       updateData(apis, name, id);
-      createJsDocNode(name, apis.data[name], helpers);
+      createDocNode(name, apis.data[name], helpers);
     }
     if (newName) {
-      createJsDocNode(newName, apis.data[newName], helpers);
+      createDocNode(newName, apis.data[newName], helpers);
     }
   }
 };
 
 async function handleNode(apis, node, { sourceDir, match }) {
-  if (node.internal.mediaType !== 'application/javascript') return;
   if (node.internal.type !== 'File') return;
+  // if (node.internal.mediaType !== 'application/javascript') return;
   if (match && !anymatch(match, node.relativePath)) return;
   const relpath = path.relative(sourceDir, node.absolutePath);
   if (relpath.startsWith('..')) return;
-  const name = relpath.split('/')[0];
-  let jsdocJson;
-  try {
-    jsdocJson = await jsdoc.explain({ files: [node.absolutePath] });
-    jsdocJson = jsdocJson.filter(({ comment }) => comment);
-  } catch (e) {
-    // Ignore as there'll probably be other tooling already checking for errors
-    // and an error here kills Gatsby.
+  if (parser) {
+    const name = relpath.split('/')[0];
+    const payload = await parser.parse(node.absolutePath, sourceDir);
+    if (payload) return updateData(apis, name, node.id, payload);
   }
-  if (jsdocJson) {
-    jsdocJson = jsdocJson.filter(({ comment }) => comment);
-    if (!jsdocJson.length) jsdocJson = null;
-  }
-  const { id } = node;
-  return updateData(apis, name, id, jsdocJson);
 }
 
-function updateData(apis, name, id, jsdoc) {
+function updateData(apis, name, id, payload) {
   let data = apis.data[name];
-  if (jsdoc) {
+  if (payload) {
     if (!data) {
       data = {};
       apis.data[name] = data;
     }
-    data[id] = jsdoc;
+    data[id] = payload;
     apis.map[id] = name;
     return name;
   }
@@ -114,91 +95,6 @@ function updateData(apis, name, id, jsdoc) {
   }
 }
 
-function createJsDocNode(name, data, {
-  createNode,
-  createNodeId,
-  getNode,
-  deleteNode,
-  i18n,
-}) {
-  const id = createNodeId(`jsdoc ${name}`);
-  if (!data) {
-    const node = getNode(id);
-    if (node) deleteNode({ node });
-    return;
-  }
-  const items = Object.values(data)
-  .reduce((list, jsdoc) => [...list, ...jsdoc], []);
-  items.sort((a, b) => {
-    const keya = sortKey(a);
-    const keyb = sortKey(b);
-    if (keya < keyb) return -1;
-    if (keya > keyb) return 1;
-    return 0;
-  });
-  const title = (items[0].kind === 'file' ? items[0].alias : null) || name;
-  const contents = [
-    `# ${title}`,
-  ];
-  items.forEach(item => {
-    const {
-      kind,
-      longname,
-      description,
-      params,
-      returns,
-      examples,
-    } = item;
-    const lines = [];
-    if (kind !== 'file') {
-      lines.push(`## ${longname}`);
-    }
-    if (description) lines.push('', description);
-    [
-      [params, i18n.Params],
-      [returns, i18n.Returns],
-    ].forEach(([entries, title]) => {
-      if (entries && entries.length) {
-        lines.push('', `#### ${title}`);
-        entries.forEach(entry => {
-          const parts = [];
-          if (entry.name) parts.push(asCode(entry.name));
-          if (entry.type) parts.push(`*${entry.type.names.join(' | ').replace(/([<>])/g, '\\$1')}*`);
-          if (entry.defaultvalue) parts.push(`${i18n.DefaultAs} ${asCode(entry.defaultvalue)}`);
-          lines.push('', `- ${parts.join(' ')}`);
-          const rows = [];
-          if (entry.description) {
-            rows.push('', ...entry.description.split('\n'));
-          }
-          lines.push(...rows.map(row => `    ${row}`));
-        });
-      }
-    });
-    if (examples) {
-      lines.push('', `#### ${i18n.Example}`);
-      examples.forEach(entry => {
-        lines.push('', '```js', entry, '```');
-      });
-    }
-    contents.push(lines.join('\n'));
-  });
-  const markdownStr = contents.join('\n\n');
-  createNode({
-    id,
-    children: [],
-    sourceNodes: Object.keys(data),
-    internal: {
-      type: 'JsDocMarkdown',
-      mediaType: 'text/markdown',
-      content: markdownStr,
-      contentDigest: digest(markdownStr),
-    },
-    name,
-    jsdoc: items,
-  });
-}
-
-function asCode(str) {
-  const escaped = str.replace(/([`$])/g, '\\$1');
-  return `\`${str}\``;
+function createDocNode(name, payload, helpers) {
+  if (parser && parser.createNode) return parser.createNode(name, payload, helpers);
 }

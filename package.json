@@ -2,9 +2,14 @@
   "name": "gatsby-source-jsdoc",
   "version": "0.1.3",
   "description": "Gatsby source plugin which uses jsdoc-api to generate JavaScript documentation",
-  "main": "index.js",
   "author": "Gerald <i@gerald.top>",
   "license": "MIT",
+  "main": "index.js",
+  "files": [
+    "lib",
+    "gatsby-*.js",
+    "index.js"
+  ],
   "keywords": [
     "jsdoc",
     "gatsby",
@@ -12,8 +17,9 @@
     "gatsby-source"
   ],
   "dependencies": {
+    "@babel/parser": "^7.2.0",
     "anymatch": "^2.0.0",
-    "jsdoc-api": "^4.0.3"
+    "lodash": "^4.17.11"
   },
   "repository": "git@github.com:gera2ld/gatsby-source-jsdoc.git"
 }
