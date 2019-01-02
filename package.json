@@ -1,6 +1,6 @@
 {
   "name": "gatsby-source-jsdoc",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Gatsby source plugin which uses jsdoc-api to generate JavaScript documentation",
   "author": "Gerald <i@gerald.top>",
   "license": "MIT",
