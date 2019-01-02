@@ -66,6 +66,7 @@ exports.sourceNodes = async ({
 async function handleNode(apis, node, { sourceDir, match }) {
   if (node.internal.type !== 'File') return;
   // if (node.internal.mediaType !== 'application/javascript') return;
+  if (!/\.(jsx?|tsx?)$/.test(node.relativePath)) return;
   if (match && !anymatch(match, node.relativePath)) return;
   const relpath = path.relative(sourceDir, node.absolutePath);
   if (relpath.startsWith('..')) return;
