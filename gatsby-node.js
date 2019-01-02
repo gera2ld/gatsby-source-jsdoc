@@ -71,7 +71,8 @@ async function handleNode(apis, node, { sourceDir, match }) {
   const relpath = path.relative(sourceDir, node.absolutePath);
   if (relpath.startsWith('..')) return;
   if (parser) {
-    const name = relpath.split('/')[0];
+    let name = relpath.split('/')[0];
+    name = path.basename(name, path.extname(name));
     const payload = await parser.parse(node.absolutePath, sourceDir);
     if (payload) return updateData(apis, name, node.id, payload);
   }
